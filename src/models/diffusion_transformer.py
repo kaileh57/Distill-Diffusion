@@ -235,16 +235,61 @@ class DiffusionTransformer(PreTrainedModel):
     
     def _forward_gpt_style(self, inputs_embeds, attention_mask, causal_mask):
         """Forward pass for GPT-style models."""
-        # For GPT-style models, we need to handle the causal mask differently
         if self.config.use_bidirectional_attention:
-            # Temporarily disable causal mask
-            outputs = self.base_model.transformer(
-                inputs_embeds=inputs_embeds,
-                attention_mask=attention_mask,
-                use_cache=False,
-                output_hidden_states=True,
-                return_dict=True
+            # Override causal mask to enable bidirectional attention
+            batch_size, seq_len = inputs_embeds.shape[:2]
+            device = inputs_embeds.device
+            
+            # Create full attention mask (no causal masking)
+            full_attention_mask = torch.ones(
+                batch_size, seq_len, seq_len, device=device
             )
+            
+            # Apply padding mask if provided
+            if attention_mask is not None:
+                # Convert 2D mask to 4D for attention
+                extended_attention_mask = attention_mask[:, None, None, :]
+                extended_attention_mask = extended_attention_mask.expand(
+                    batch_size, 1, seq_len, seq_len
+                )
+                # Set masked positions to 0
+                full_attention_mask = full_attention_mask * extended_attention_mask
+            
+            # Convert to attention mask format (0 for attend, -inf for mask)
+            attention_mask_4d = torch.where(
+                full_attention_mask == 0,
+                torch.tensor(float('-inf'), device=device),
+                torch.tensor(0.0, device=device)
+            )
+            
+            # Store original attention implementation
+            original_attn_forward = {}
+            
+            def create_bidirectional_forward(original_forward):
+                def bidirectional_forward(hidden_states, attention_mask=None, **kwargs):
+                    # Use our custom attention mask
+                    return original_forward(hidden_states, attention_mask=attention_mask_4d, **kwargs)
+                return bidirectional_forward
+            
+            # Temporarily replace attention forward methods
+            for i, layer in enumerate(self.base_model.transformer.h):
+                if hasattr(layer, 'attn'):
+                    original_attn_forward[i] = layer.attn.forward
+                    layer.attn.forward = create_bidirectional_forward(original_attn_forward[i])
+            
+            try:
+                outputs = self.base_model.transformer(
+                    inputs_embeds=inputs_embeds,
+                    attention_mask=attention_mask,
+                    use_cache=False,
+                    output_hidden_states=True,
+                    return_dict=True
+                )
+            finally:
+                # Restore original attention methods
+                for i, layer in enumerate(self.base_model.transformer.h):
+                    if i in original_attn_forward:
+                        layer.attn.forward = original_attn_forward[i]
         else:
             outputs = self.base_model.transformer(
                 inputs_embeds=inputs_embeds,

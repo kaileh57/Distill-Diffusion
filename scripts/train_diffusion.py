@@ -175,6 +175,22 @@ def main():
     )
     
     if args.dry_run:
+        logger.info("=" * 60)
+        logger.info("DRY RUN SUMMARY")
+        logger.info("=" * 60)
+        logger.info(f"Model: {model_config['model_name']}")
+        logger.info(f"Parameters: {sum(p.numel() for p in model.parameters()) / 1e9:.2f}B")
+        logger.info(f"Device: {device}")
+        logger.info(f"Batch size: {training_config.get('batch_size', 4)}")
+        logger.info(f"Gradient accumulation: {training_config.get('gradient_accumulation_steps', 1)}")
+        logger.info(f"Effective batch size: {training_config.get('batch_size', 4) * training_config.get('gradient_accumulation_steps', 1)}")
+        logger.info(f"Max sequence length: {training_config.get('max_seq_length', 512)}")
+        logger.info(f"Training stages: {training_config.get('stage1_epochs', 2)} + {training_config.get('stage2_epochs', 4)} + {training_config.get('stage3_epochs', 2)} epochs")
+        logger.info(f"Dataset: {training_config.get('dataset_name', 'openwebtext')}")
+        logger.info(f"Noise schedule: {model_config.get('noise_schedule', 'cosine')}")
+        logger.info(f"Timesteps: {model_config.get('num_timesteps', 1000)}")
+        logger.info(f"Bidirectional attention: {model_config.get('use_bidirectional_attention', True)}")
+        logger.info("=" * 60)
         logger.info("Dry run completed successfully!")
         return 0
     

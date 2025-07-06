@@ -30,3 +30,9 @@ lora_dropout: 0.1
 # Model-specific optimizations
 compile_model: true
 use_flash_attention: false  # Disable if not available
+
+# Additional required fields
+cache_dir: "./model_cache"
+stage1_learning_rate_multiplier: 0.5
+stage2_learning_rate_multiplier: 1.0
+stage3_learning_rate_multiplier: 0.3
