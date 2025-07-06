@@ -1,0 +1,32 @@
+# Configuration for converting Phi-2 to diffusion
+model_name: "microsoft/phi-2"
+model_type: "phi"
+hidden_size: 2560
+num_attention_heads: 32
+num_hidden_layers: 32
+vocab_size: 51200
+max_position_embeddings: 2048
+
+# Diffusion specific
+mask_token_id: 50256  # Using unused token
+num_timesteps: 1000
+noise_schedule: "cosine"
+use_bidirectional_attention: true
+freeze_base_model: true
+time_embedding_dim: 2560
+
+# Training stages
+stage1_epochs: 2
+stage2_epochs: 4
+stage3_epochs: 2
+
+# Memory optimization
+use_gradient_checkpointing: true
+use_lora: false  # Can enable for larger models
+lora_rank: 16
+lora_alpha: 32
+lora_dropout: 0.1
+
+# Model-specific optimizations
+compile_model: true
+use_flash_attention: false  # Disable if not available

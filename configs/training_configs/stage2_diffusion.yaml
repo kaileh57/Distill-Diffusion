@@ -1,0 +1,57 @@
+# Stage 2: Diffusion objective training
+experiment_name: "phi2_diffusion_conversion"
+output_dir: "./outputs/phi2_diffusion"
+
+# Training stages
+stage1_epochs: 2
+stage2_epochs: 4
+stage3_epochs: 2
+
+# Batch configuration
+batch_size: 2  # Conservative for A6000
+eval_batch_size: 4
+gradient_accumulation_steps: 16  # Effective batch size = 32
+max_grad_norm: 1.0
+
+# Learning rate and optimization
+learning_rate: 1e-4
+optimizer_type: "adamw"
+use_8bit_adam: true
+adam_beta1: 0.9
+adam_beta2: 0.999
+adam_epsilon: 1e-8
+weight_decay: 0.01
+
+# Learning rate scheduling
+scheduler_type: "cosine_with_warmup"
+warmup_steps: 1000
+min_lr: 1e-6
+
+# Data configuration
+dataset_name: "wikitext"  # Start with smaller dataset
+text_column: "text"
+max_seq_length: 512
+max_train_samples: 50000  # Limit for testing
+max_eval_samples: 1000
+preprocessing_num_workers: 4
+cache_dir: "./data_cache"
+
+# Checkpointing and evaluation
+save_steps: 2500
+eval_steps: 1000
+logging_steps: 100
+save_total_limit: 3
+
+# Hardware optimization
+mixed_precision: "fp16"
+dataloader_num_workers: 4
+dataloader_pin_memory: true
+
+# Monitoring
+use_wandb: true
+log_predictions: false
+
+# Memory optimization
+use_gradient_checkpointing: true
+cpu_offload: false
+optimizer_offload: false

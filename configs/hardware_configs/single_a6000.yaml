@@ -1,0 +1,55 @@
+# Optimized for single RTX A6000 (48GB)
+device: "cuda:0"
+max_memory_gb: 45  # Leave 3GB headroom
+dtype: "float16"
+
+# Memory optimization strategies
+gradient_checkpointing: true
+cpu_offload: false
+optimizer_offload: false
+use_8bit_adam: true
+
+# Model size specific batch sizes
+batch_sizes:
+  phi2: 2       # 2.7B parameters
+  gpt2_medium: 4    # 355M parameters  
+  gpt2_large: 2     # 774M parameters
+  gpt2_xl: 1        # 1.5B parameters
+  llama_7b: 1       # 7B parameters (with optimizations)
+
+# Batch size recommendations by model size
+batch_size_by_params:
+  "0-1B": 4
+  "1B-3B": 2
+  "3B-7B": 1
+  "7B+": 1
+
+# Performance optimizations
+compile_model: true  # PyTorch 2.0 compile
+use_flash_attention: false  # Set to true if available
+pin_memory: true
+non_blocking: true
+
+# Multi-GPU settings (for future use)
+use_deepspeed: false
+deepspeed_config: null
+
+# Memory monitoring
+monitor_gpu_memory: true
+memory_warning_threshold: 0.9  # Warn at 90% usage
+memory_error_threshold: 0.95   # Error at 95% usage
+
+# Automatic mixed precision
+amp_enabled: true
+amp_opt_level: "O1"
+
+# Model-specific memory estimates (GB)
+memory_estimates:
+  phi2:
+    fp16_weights: 5.4
+    training_peak: 35
+    training_conservative: 30
+  gpt2_xl:
+    fp16_weights: 3.0
+    training_peak: 25
+    training_conservative: 20
